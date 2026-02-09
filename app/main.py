@@ -19,6 +19,11 @@ scanner = MusicScanner(MUSIC_DIR)
 async def lifespan(app: FastAPI):
     # Startup
     print("Starting Cyber TopGoal...")
+    print(f"Checking MUSIC_DIR: {MUSIC_DIR}")
+    for root, dirs, files in os.walk(MUSIC_DIR):
+        print(f"Found directory: {root}")
+        for file in files:
+            print(f" - {file}")
     init_db()
     scanner.scan()
     yield
