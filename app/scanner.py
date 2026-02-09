@@ -2,7 +2,7 @@ import os
 import glob
 from mutagen import File
 from mutagen.id3 import ID3
-from typing import Dict
+from typing import Dict, Optional
 from .models import Track
 from .utils import generate_file_id
 
