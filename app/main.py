@@ -42,7 +42,7 @@ templates = Jinja2Templates(directory="templates")
 async def read_root(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
-@app.get("/api/library", response_model=list[Track])
+@app.get("/api/library", response_model=list[Track], response_model_exclude={"path"})
 async def get_library():
     return scanner.get_all_tracks()
 

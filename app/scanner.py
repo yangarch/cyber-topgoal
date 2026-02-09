@@ -87,13 +87,14 @@ class MusicScanner:
                      break
 
         # Sanitize strings to avoid UnicodeEncodeError in JSON response
+        # BUT keep path raw for file access. We will exclude it from API response.
         track = Track(
             id=file_id,
             title=self._sanitize(title),
             artist=self._sanitize(artist),
             album=self._sanitize(album),
             duration=duration,
-            path=self._sanitize(path),
+            path=path,
             has_cover=has_cover
         )
         self.library[file_id] = track
