@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+env/
+venv/
+
+# Environment Variables (보안)
+.env
+
+# Data & Media (절대 올리지 말 것)
+*.mp3
+*.wav
+*.flac
+*.m4a
+*.ogg
+/music/
+/data/
+*.db
+*.sqlite3
+
+# OS Files
+.DS_Store
+Thumbs.db

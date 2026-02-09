@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cyber TopGoal</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <header>
+        <h1>Cyber TopGoal</h1>
+    </header>
+
+    <main>
+        <section id="library-section">
+            <h2>Library</h2>
+            <ul id="track-list" class="track-list">
+                <!-- Tracks will be loaded here -->
+            </ul>
+        </section>
+
+        <section id="guestbook-section">
+            <h2>Guestbook</h2>
+            <div id="comment-list">
+                <!-- Comments will be loaded here -->
+            </div>
+            <form id="comment-form">
+                <input type="text" id="nickname" placeholder="Nickname" required style="width: 30%;">
+                <input type="text" id="content" placeholder="Leave a message..." required style="flex: 1;">
+                <button type="submit" class="primary">Send</button>
+            </form>
+        </section>
+    </main>
+
+    <footer id="player-bar">
+        <div class="now-playing">
+            <div id="np-title">No Track Selected</div>
+            <div id="np-artist" style="font-size: 0.8rem; color: #b3b3b3;"></div>
+        </div>
+        
+        <div class="player-controls">
+            <button id="btn-prev">⏮</button>
+            <button id="btn-play" class="primary">▶</button>
+            <button id="btn-next">⏭</button>
+            <button id="btn-shuffle" title="Shuffle Queue">🔀</button>
+        </div>
+
+        <audio id="audio-player"></audio>
+    </footer>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    ports:
+      - "8004:8004"
+    volumes:
+      - ./music_files:/music
+      - ./data:/data
+    environment:
+      - MUSIC_DIR=/music
+      - DATA_DIR=/data
+    restart: unless-stopped
