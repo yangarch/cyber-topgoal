@@ -10,7 +10,7 @@ from typing import Optional
 
 from .scanner import MusicScanner
 from .database import init_db, create_comment, get_comments
-from .models import Track, Comment, CommentCreate
+from .models import Track, PublicTrack, Comment, CommentCreate
 
 MUSIC_DIR = os.environ.get("MUSIC_DIR", "/music")
 scanner = MusicScanner(MUSIC_DIR)
@@ -42,9 +42,20 @@ templates = Jinja2Templates(directory="templates")
 async def read_root(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
-@app.get("/api/library", response_model=list[Track], response_model_exclude={"path"})
+@app.get("/api/library", response_model=list[PublicTrack])
 async def get_library():
-    return scanner.get_all_tracks()
+    # Convert internal Track to PublicTrack
+    tracks = scanner.get_all_tracks()
+    return [
+        PublicTrack(
+            id=t.id,
+            title=t.title,
+            artist=t.artist,
+            album=t.album,
+            duration=t.duration,
+            has_cover=t.has_cover
+        ) for t in tracks
+    ]
 
 @app.post("/api/library/scan")
 async def scan_library():

@@ -8,6 +8,21 @@ class Track(BaseModel):
     album: str
     duration: float
     path: str
+class Track(BaseModel):
+    id: str
+    title: str
+    artist: str
+    album: str
+    duration: float
+    path: str
+    has_cover: bool
+
+class PublicTrack(BaseModel):
+    id: str
+    title: str
+    artist: str
+    album: str
+    duration: float
     has_cover: bool
 
 class CommentCreate(BaseModel):
