@@ -5,6 +5,10 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Set locale to avoid encoding issues
+ENV LANG=C.UTF-8
+ENV LC_ALL=C.UTF-8
+
 COPY . .
 
 # Create directory for data if it doesn't exist (though volume mount will handle it)
