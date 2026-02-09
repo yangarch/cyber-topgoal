@@ -1,13 +1,7 @@
 from pydantic import BaseModel
 from typing import Optional
 
-class Track(BaseModel):
-    id: str
-    title: str
-    artist: str
-    album: str
-    duration: float
-    path: str
+
 class Track(BaseModel):
     id: str
     title: str
