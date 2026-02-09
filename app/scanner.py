@@ -29,6 +29,12 @@ class MusicScanner:
         
         print(f"Scanned {len(self.library)} tracks.")
 
+    def _sanitize(self, s: str) -> str:
+        """Sanitizes a string to be safe for JSON encoding (removes surrogates)."""
+        if s is None:
+            return ""
+        return s.encode('utf-8', 'replace').decode('utf-8')
+
     def _process_file(self, path: str):
         audio = File(path, easy=True)
         id3_tags = None
@@ -80,13 +86,14 @@ class MusicScanner:
                      has_cover = True # Use a flag that we will handle in the API logic
                      break
 
+        # Sanitize strings to avoid UnicodeEncodeError in JSON response
         track = Track(
             id=file_id,
-            title=title,
-            artist=artist,
-            album=album,
+            title=self._sanitize(title),
+            artist=self._sanitize(artist),
+            album=self._sanitize(album),
             duration=duration,
-            path=path,
+            path=self._sanitize(path),
             has_cover=has_cover
         )
         self.library[file_id] = track
