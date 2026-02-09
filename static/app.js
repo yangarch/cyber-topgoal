@@ -38,9 +38,22 @@ async function fetchLibrary() {
     }
 }
 
-function renderLibrary() {
+// Search Logic
+const searchInput = document.getElementById('search-input');
+
+function renderLibrary(filterText = '') {
     trackListEl.innerHTML = '';
-    library.forEach((track) => {
+
+    // Filter library
+    const filtered = library.filter(track => {
+        if (!filterText) return true;
+        const term = filterText.toLowerCase();
+        return (track.title && track.title.toLowerCase().includes(term)) ||
+            (track.artist && track.artist.toLowerCase().includes(term)) ||
+            (track.album && track.album.toLowerCase().includes(term));
+    });
+
+    filtered.forEach((track) => {
         const li = document.createElement('li');
         li.className = 'track-item';
         li.dataset.id = track.id;
@@ -218,6 +231,10 @@ function setupEventListeners() {
             btnRescan.disabled = false;
             btnRescan.textContent = "🔄 Rescan";
         }
+    });
+
+    searchInput.addEventListener('input', (e) => {
+        renderLibrary(e.target.value);
     });
 
     audioPlayer.addEventListener('ended', nextTrack);
