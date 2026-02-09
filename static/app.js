@@ -16,6 +16,7 @@ const btnPlay = document.getElementById('btn-play');
 const btnPrev = document.getElementById('btn-prev');
 const btnNext = document.getElementById('btn-next');
 const btnShuffle = document.getElementById('btn-shuffle');
+const btnRescan = document.getElementById('btn-rescan');
 const commentListEl = document.getElementById('comment-list');
 const commentForm = document.getElementById('comment-form');
 
@@ -43,18 +44,18 @@ function renderLibrary() {
         const li = document.createElement('li');
         li.className = 'track-item';
         li.dataset.id = track.id;
-        
+
         li.innerHTML = `
             <div class="track-info">
                 <span class="track-title">${track.title}</span>
                 <span class="track-artist">${track.artist}</span>
             </div>
         `;
-        
+
         li.addEventListener('click', () => {
-             playTrack(track);
+            playTrack(track);
         });
-        
+
         trackListEl.appendChild(li);
     });
 }
@@ -71,21 +72,21 @@ function updateActiveTrackUI(trackId) {
 // Player Logic
 function playTrack(track) {
     if (!track) return;
-    
+
     // Update queue if not playing from queue
     // For MVP, simplistic queue: just play the clicked track
     // Ideally, we'd have a smarter queue system. 
     // Here we find the index of this track in the library to enable next/prev
-    queue = library; 
+    queue = library;
     currentTrackIndex = library.findIndex(t => t.id === track.id);
-    
+
     _loadAndPlay(track);
 }
 
 function _loadAndPlay(track) {
     audioPlayer.src = `${API_BASE}/stream/${track.id}`;
     audioPlayer.play().catch(e => console.error("Play failed:", e));
-    
+
     npTitle.textContent = track.title;
     npArtist.textContent = track.artist;
     updateActiveTrackUI(track.id);
@@ -119,7 +120,7 @@ function updatePlayButton(isPlaying) {
 
 function nextTrack() {
     if (queue.length === 0) return;
-    
+
     if (isShuffle) {
         currentTrackIndex = Math.floor(Math.random() * queue.length);
     } else {
@@ -130,16 +131,16 @@ function nextTrack() {
 
 function prevTrack() {
     if (queue.length === 0) return;
-    
+
     if (audioPlayer.currentTime > 3) {
         audioPlayer.currentTime = 0;
         return;
     }
-    
+
     if (isShuffle) {
-         currentTrackIndex = Math.floor(Math.random() * queue.length);
+        currentTrackIndex = Math.floor(Math.random() * queue.length);
     } else {
-         currentTrackIndex = (currentTrackIndex - 1 + queue.length) % queue.length;
+        currentTrackIndex = (currentTrackIndex - 1 + queue.length) % queue.length;
     }
     _loadAndPlay(queue[currentTrackIndex]);
 }
@@ -175,16 +176,16 @@ async function postComment(e) {
     e.preventDefault();
     const nickname = document.getElementById('nickname').value;
     const content = document.getElementById('content').value;
-    
+
     if (!nickname || !content) return;
-    
+
     try {
         const res = await fetch(`${API_BASE}/comments`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ nickname, content })
         });
-        
+
         if (res.ok) {
             document.getElementById('content').value = ''; // Clear content only
             fetchComments();
@@ -199,14 +200,28 @@ function setupEventListeners() {
     btnPlay.addEventListener('click', togglePlay);
     btnNext.addEventListener('click', nextTrack);
     btnPrev.addEventListener('click', prevTrack);
-    
+
     btnShuffle.addEventListener('click', () => {
         isShuffle = !isShuffle;
         btnShuffle.style.color = isShuffle ? '#1db954' : '#fff';
     });
-    
+
+    btnRescan.addEventListener('click', async () => {
+        btnRescan.disabled = true;
+        btnRescan.textContent = "Scanning...";
+        try {
+            await fetch(`${API_BASE}/library/scan`, { method: 'POST' });
+            await fetchLibrary();
+        } catch (e) {
+            console.error("Scan failed", e);
+        } finally {
+            btnRescan.disabled = false;
+            btnRescan.textContent = "🔄 Rescan";
+        }
+    });
+
     audioPlayer.addEventListener('ended', nextTrack);
-    
+
     commentForm.addEventListener('submit', postComment);
 }
 

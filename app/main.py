@@ -46,6 +46,11 @@ async def read_root(request: Request):
 async def get_library():
     return scanner.get_all_tracks()
 
+@app.post("/api/library/scan")
+async def scan_library():
+    scanner.scan()
+    return {"message": "Scan completed", "tracks": len(scanner.library)}
+
 @app.get("/api/comments", response_model=list[Comment])
 async def read_comments():
     return get_comments()
