@@ -282,4 +282,24 @@ button.active {
         flex-direction: column;
         align-items: flex-end;
     }
+
+    /* Stack Main Content */
+    main {
+        flex-direction: column;
+    }
+
+    #library-section {
+        flex: none;
+        height: 50vh;
+        /* Give library half the screen height */
+        border-right: none;
+        border-bottom: 1px solid #333;
+        overflow-y: auto;
+    }
+
+    #guestbook-section {
+        flex: 1;
+        /* Guestbook takes remaining space */
+        overflow-y: auto;
+    }
 }

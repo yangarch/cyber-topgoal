@@ -318,6 +318,21 @@ function setupEventListeners() {
     });
 
     commentForm.addEventListener('submit', postComment);
+
+    const btnRefreshComments = document.getElementById('btn-refresh-comments');
+    if (btnRefreshComments) {
+        btnRefreshComments.addEventListener('click', () => {
+            // Animate button spin
+            btnRefreshComments.style.transition = 'transform 0.5s';
+            btnRefreshComments.style.transform = 'rotate(360deg)';
+            fetchComments().then(() => {
+                setTimeout(() => {
+                    btnRefreshComments.style.transition = 'none';
+                    btnRefreshComments.style.transform = 'rotate(0deg)';
+                }, 500);
+            });
+        });
+    }
 }
 
 // Start
