@@ -303,6 +303,12 @@ button.active {
         border-right: none;
         border-bottom: 1px solid #333;
         overflow-y: auto;
+        transition: height 0.3s ease, flex 0.3s ease;
+    }
+
+    #library-section.expanded {
+        flex: 1;
+        height: auto;
     }
 
     #guestbook-section {
@@ -310,5 +316,26 @@ button.active {
         /* Guestbook takes remaining space */
         min-height: 0;
         /* Important for nested flex scrolling */
+        transition: flex 0.3s ease, min-height 0.3s ease;
     }
+
+    #guestbook-section.collapsed {
+        flex: 0 0 auto;
+        min-height: auto;
+        overflow: hidden;
+    }
+
+    #guestbook-section.collapsed #comment-list,
+    #guestbook-section.collapsed #comment-form {
+        display: none;
+    }
+}
+
+/* Toggle Button Transition */
+#btn-toggle-gb {
+    transition: transform 0.3s ease;
+}
+
+#guestbook-section.collapsed #btn-toggle-gb {
+    transform: rotate(-90deg);
 }

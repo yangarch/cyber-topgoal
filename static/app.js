@@ -333,6 +333,22 @@ function setupEventListeners() {
             });
         });
     }
+
+    const btnToggleGb = document.getElementById('btn-toggle-gb');
+    if (btnToggleGb) {
+        btnToggleGb.addEventListener('click', () => {
+            const guestbookSection = document.getElementById('guestbook-section');
+            const librarySection = document.getElementById('library-section');
+
+            guestbookSection.classList.toggle('collapsed');
+            if (librarySection) {
+                librarySection.classList.toggle('expanded');
+            }
+
+            // Optional: Rotate arrow based on state (handled in CSS mostly, but logic check)
+            // CSS handles rotation: .collapsed #btn-toggle-gb -> rotate(-90deg)
+        });
+    }
 }
 
 // Start
