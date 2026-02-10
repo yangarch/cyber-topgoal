@@ -2,40 +2,54 @@
 const API_BASE = '/api';
 
 // State
-let library = [];
-let queue = [];
-let currentTrackIndex = -1;
-let isShuffle = false;
-let skippedTracks = new Set(JSON.parse(localStorage.getItem('skippedTracks') || '[]'));
-
 // DOM Elements
 const trackListEl = document.getElementById('track-list');
 const audioPlayer = document.getElementById('audio-player');
 const npTitle = document.getElementById('np-title');
 const npArtist = document.getElementById('np-artist');
 const btnPlay = document.getElementById('btn-play');
-const btnPrev = document.getElementById('btn-prev');
 const btnNext = document.getElementById('btn-next');
+const btnPrev = document.getElementById('btn-prev');
 const btnShuffle = document.getElementById('btn-shuffle');
 const btnRescan = document.getElementById('btn-rescan');
 const commentListEl = document.getElementById('comment-list');
 const commentForm = document.getElementById('comment-form');
 
+// State
+let library = [];
+let queue = [];
+let currentTrackIndex = -1;
+let isShuffle = false;
+// Ensure skippedTracks stores strings to avoid type mismatch
+let skippedTracks = new Set(
+    (JSON.parse(localStorage.getItem('skippedTracks') || '[]')).map(String)
+);
+
+// ...
+
 // Initialization
 async function init() {
+    // Restore Guestbook State
+    const isCollapsed = localStorage.getItem('guestbookCollapsed') === 'true';
+    if (isCollapsed) {
+        const guestbookSection = document.getElementById('guestbook-section');
+        const librarySection = document.getElementById('library-section');
+        if (guestbookSection) guestbookSection.classList.add('collapsed');
+        if (librarySection) librarySection.classList.add('expanded');
+    }
+
     await fetchLibrary();
     await fetchComments();
     setupEventListeners();
 }
 
-// Library Logic
 async function fetchLibrary() {
     try {
         const res = await fetch(`${API_BASE}/library`);
         library = await res.json();
-        renderLibrary();
+        renderLibrary(searchInput.value);
     } catch (e) {
-        console.error("Failed to fetch library:", e);
+        console.error("Failed to fetch library", e);
     }
 }
 
@@ -60,7 +74,8 @@ function renderLibrary(filterText = '') {
         li.dataset.id = track.id;
 
         // Skip Checkbox
-        const isSkipped = skippedTracks.has(track.id);
+        const trackIdStr = String(track.id);
+        const isSkipped = skippedTracks.has(trackIdStr);
 
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
@@ -74,9 +89,9 @@ function renderLibrary(filterText = '') {
 
         checkbox.addEventListener('change', (e) => {
             if (e.target.checked) {
-                skippedTracks.delete(track.id);
+                skippedTracks.delete(trackIdStr);
             } else {
-                skippedTracks.add(track.id);
+                skippedTracks.add(trackIdStr);
             }
             localStorage.setItem('skippedTracks', JSON.stringify([...skippedTracks]));
         });
@@ -341,9 +356,13 @@ function setupEventListeners() {
             const librarySection = document.getElementById('library-section');
 
             guestbookSection.classList.toggle('collapsed');
+
+            const isCollapsed = guestbookSection.classList.contains('collapsed');
             if (librarySection) {
-                librarySection.classList.toggle('expanded');
+                librarySection.classList.toggle('expanded', isCollapsed); // Sync with collapsed state
             }
+
+            localStorage.setItem('guestbookCollapsed', isCollapsed);
 
             // Optional: Rotate arrow based on state (handled in CSS mostly, but logic check)
             // CSS handles rotation: .collapsed #btn-toggle-gb -> rotate(-90deg)
