@@ -41,13 +41,29 @@ async function init() {
     await fetchLibrary();
     await fetchComments();
     setupEventListeners();
+
+    // Restore last played track
+    const lastPlayedId = localStorage.getItem('lastPlayedTrackId');
+    if (lastPlayedId && library.length > 0) {
+        const track = library.find(t => t.id === lastPlayedId);
+        if (track) {
+            // Load but don't play
+            currentTrackIndex = library.findIndex(t => t.id === lastPlayedId);
+            _loadAndPlay(track, false); // Pass false to autoPlay
+        }
+    }
 }
 
 async function fetchLibrary() {
     try {
         const res = await fetch(`${API_BASE}/library`);
         library = await res.json();
-        renderLibrary(searchInput.value);
+
+        if (searchInput) {
+            renderLibrary(searchInput.value);
+        } else {
+            renderLibrary('');
+        }
     } catch (e) {
         console.error("Failed to fetch library", e);
     }
@@ -143,17 +159,27 @@ function playTrack(track) {
     queue = library;
     currentTrackIndex = library.findIndex(t => t.id === track.id);
 
-    _loadAndPlay(track);
+    _loadAndPlay(track, true);
 }
 
-function _loadAndPlay(track) {
+function _loadAndPlay(track, autoPlay = true) {
     audioPlayer.src = `${API_BASE}/stream/${track.id}`;
-    audioPlayer.play().catch(e => console.error("Play failed:", e));
+    if (autoPlay) {
+        audioPlayer.play().catch(e => console.error("Play failed:", e));
+        updatePlayButton(true);
+    } else {
+        updatePlayButton(false);
+    }
+
+    // Update Browser Title
+    document.title = `${track.title} - ${track.artist}`;
+
+    // Save to localStorage
+    localStorage.setItem('lastPlayedTrackId', track.id);
 
     npTitle.textContent = track.title;
     npArtist.textContent = track.artist;
     updateActiveTrackUI(track.id);
-    updatePlayButton(true);
 
     if ('mediaSession' in navigator) {
         navigator.mediaSession.metadata = new MediaMetadata({
@@ -166,8 +192,10 @@ function _loadAndPlay(track) {
         });
     }
 
-    // Increment Play Count
-    fetch(`${API_BASE}/track/${track.id}/play`, { method: 'POST' }).catch(console.error);
+    // Increment Play Count only if playing
+    if (autoPlay) {
+        fetch(`${API_BASE}/track/${track.id}/play`, { method: 'POST' }).catch(console.error);
+    }
 }
 
 function togglePlay() {
