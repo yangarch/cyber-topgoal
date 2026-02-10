@@ -9,7 +9,7 @@ from contextlib import asynccontextmanager
 from typing import Optional
 
 from .scanner import MusicScanner
-from .database import init_db, create_comment, get_comments
+from .database import init_db, create_comment, get_comments, increment_play_count, increment_finish_count, get_all_track_stats
 from .models import Track, PublicTrack, Comment, CommentCreate
 
 MUSIC_DIR = os.environ.get("MUSIC_DIR", "/music")
@@ -46,6 +46,8 @@ async def read_root(request: Request):
 async def get_library():
     # Convert internal Track to PublicTrack
     tracks = scanner.get_all_tracks()
+    stats = get_all_track_stats()
+    
     return [
         PublicTrack(
             id=t.id,
@@ -53,7 +55,9 @@ async def get_library():
             artist=t.artist,
             album=t.album,
             duration=t.duration,
-            has_cover=t.has_cover
+            has_cover=t.has_cover,
+            play_count=stats.get(t.id, {}).get('play', 0),
+            finish_count=stats.get(t.id, {}).get('finish', 0)
         ) for t in tracks
     ]
 
@@ -61,6 +65,16 @@ async def get_library():
 async def scan_library():
     scanner.scan()
     return {"message": "Scan completed", "tracks": len(scanner.library)}
+
+@app.post("/api/track/{file_id}/play")
+async def track_play(file_id: str):
+    increment_play_count(file_id)
+    return {"status": "ok"}
+
+@app.post("/api/track/{file_id}/finish")
+async def track_finish(file_id: str):
+    increment_finish_count(file_id)
+    return {"status": "ok"}
 
 @app.get("/api/comments", response_model=list[Comment])
 async def read_comments():

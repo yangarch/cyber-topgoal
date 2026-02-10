@@ -6,6 +6,7 @@ let library = [];
 let queue = [];
 let currentTrackIndex = -1;
 let isShuffle = false;
+let skippedTracks = new Set(JSON.parse(localStorage.getItem('skippedTracks') || '[]'));
 
 // DOM Elements
 const trackListEl = document.getElementById('track-list');
@@ -58,15 +59,49 @@ function renderLibrary(filterText = '') {
         li.className = 'track-item';
         li.dataset.id = track.id;
 
-        li.innerHTML = `
+        // Skip Checkbox
+        const isSkipped = skippedTracks.has(track.id);
+
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.className = 'track-checkbox';
+        checkbox.checked = !isSkipped; // Checked means "Play", so if skipped, it's unchecked
+        checkbox.title = "Uncheck to skip this track";
+
+        checkbox.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent playing when clicking checkbox
+        });
+
+        checkbox.addEventListener('change', (e) => {
+            if (e.target.checked) {
+                skippedTracks.delete(track.id);
+            } else {
+                skippedTracks.add(track.id);
+            }
+            localStorage.setItem('skippedTracks', JSON.stringify([...skippedTracks]));
+        });
+
+        const trackContent = document.createElement('div');
+        trackContent.className = 'track-content';
+        trackContent.style.flex = '1';
+        trackContent.innerHTML = `
             <div class="track-info">
                 <span class="track-title">${track.title}</span>
                 <span class="track-artist">${track.artist}</span>
             </div>
+            <div class="track-stats" style="font-size: 0.8rem; color: #888;">
+                <span title="Plays">▶️ ${track.play_count || 0}</span>
+                <span title="Finishes" style="margin-left: 8px;">✅ ${track.finish_count || 0}</span>
+            </div>
         `;
 
-        li.addEventListener('click', () => {
-            playTrack(track);
+        li.appendChild(checkbox);
+        li.appendChild(trackContent);
+
+        li.addEventListener('click', (e) => {
+            if (e.target !== checkbox) {
+                playTrack(track);
+            }
         });
 
         trackListEl.appendChild(li);
@@ -115,6 +150,9 @@ function _loadAndPlay(track) {
             ]
         });
     }
+
+    // Increment Play Count
+    fetch(`${API_BASE}/track/${track.id}/play`, { method: 'POST' }).catch(console.error);
 }
 
 function togglePlay() {
@@ -134,11 +172,27 @@ function updatePlayButton(isPlaying) {
 function nextTrack() {
     if (queue.length === 0) return;
 
-    if (isShuffle) {
-        currentTrackIndex = Math.floor(Math.random() * queue.length);
-    } else {
-        currentTrackIndex = (currentTrackIndex + 1) % queue.length;
+    let nextIndex = currentTrackIndex;
+    let attempts = 0;
+    const maxAttempts = queue.length;
+
+    do {
+        if (isShuffle) {
+            // For shuffle, simple random might pick a skipped one, so we just retry
+            nextIndex = Math.floor(Math.random() * queue.length);
+        } else {
+            nextIndex = (nextIndex + 1) % queue.length;
+        }
+        attempts++;
+    } while (skippedTracks.has(queue[nextIndex].id) && attempts < maxAttempts);
+
+    // If all tracks are skipped, do nothing or stop
+    if (attempts >= maxAttempts && skippedTracks.has(queue[nextIndex].id)) {
+        console.log("All tracks skipped or queue empty");
+        return;
     }
+
+    currentTrackIndex = nextIndex;
     _loadAndPlay(queue[currentTrackIndex]);
 }
 
@@ -150,11 +204,24 @@ function prevTrack() {
         return;
     }
 
-    if (isShuffle) {
-        currentTrackIndex = Math.floor(Math.random() * queue.length);
-    } else {
-        currentTrackIndex = (currentTrackIndex - 1 + queue.length) % queue.length;
+    let prevIndex = currentTrackIndex;
+    let attempts = 0;
+    const maxAttempts = queue.length;
+
+    do {
+        if (isShuffle) {
+            prevIndex = Math.floor(Math.random() * queue.length);
+        } else {
+            prevIndex = (prevIndex - 1 + queue.length) % queue.length;
+        }
+        attempts++;
+    } while (skippedTracks.has(queue[prevIndex].id) && attempts < maxAttempts);
+
+    if (attempts >= maxAttempts && skippedTracks.has(queue[prevIndex].id)) {
+        return;
     }
+
+    currentTrackIndex = prevIndex;
     _loadAndPlay(queue[currentTrackIndex]);
 }
 
@@ -216,7 +283,11 @@ function setupEventListeners() {
 
     btnShuffle.addEventListener('click', () => {
         isShuffle = !isShuffle;
-        btnShuffle.style.color = isShuffle ? '#1db954' : '#fff';
+        if (isShuffle) {
+            btnShuffle.classList.add('active');
+        } else {
+            btnShuffle.classList.remove('active');
+        }
     });
 
     btnRescan.addEventListener('click', async () => {
@@ -237,7 +308,14 @@ function setupEventListeners() {
         renderLibrary(e.target.value);
     });
 
-    audioPlayer.addEventListener('ended', nextTrack);
+    audioPlayer.addEventListener('ended', () => {
+        // Increment Finish Count
+        const track = library[currentTrackIndex]; // Note: library/queue management is simple in this MVP
+        if (track) {
+            fetch(`${API_BASE}/track/${track.id}/finish`, { method: 'POST' }).catch(console.error);
+        }
+        nextTrack();
+    });
 
     commentForm.addEventListener('submit', postComment);
 }

@@ -22,8 +22,48 @@ def init_db():
             created_at TEXT NOT NULL
         )
     ''')
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS track_stats (
+            file_id TEXT PRIMARY KEY,
+            play_count INTEGER DEFAULT 0,
+            finish_count INTEGER DEFAULT 0
+        )
+    ''')
     conn.commit()
     conn.close()
+
+def increment_play_count(file_id: str):
+    conn = get_db_connection()
+    c = conn.cursor()
+    c.execute('''
+        INSERT INTO track_stats (file_id, play_count, finish_count) 
+        VALUES (?, 1, 0) 
+        ON CONFLICT(file_id) DO UPDATE SET play_count = play_count + 1
+    ''', (file_id,))
+    conn.commit()
+    conn.close()
+
+def increment_finish_count(file_id: str):
+    conn = get_db_connection()
+    c = conn.cursor()
+    c.execute('''
+        INSERT INTO track_stats (file_id, play_count, finish_count) 
+        VALUES (?, 0, 1) 
+        ON CONFLICT(file_id) DO UPDATE SET finish_count = finish_count + 1
+    ''', (file_id,))
+    conn.commit()
+    conn.close()
+
+def get_all_track_stats() -> dict:
+    conn = get_db_connection()
+    c = conn.cursor()
+    c.execute('SELECT file_id, play_count, finish_count FROM track_stats')
+    rows = c.fetchall()
+    stats = {}
+    for row in rows:
+        stats[row['file_id']] = {'play': row['play_count'], 'finish': row['finish_count']}
+    conn.close()
+    return stats
 
 def create_comment(comment: CommentCreate):
     conn = get_db_connection()

@@ -18,6 +18,8 @@ class PublicTrack(BaseModel):
     album: str
     duration: float
     has_cover: bool
+    play_count: int = 0
+    finish_count: int = 0
 
 class CommentCreate(BaseModel):
     nickname: str
