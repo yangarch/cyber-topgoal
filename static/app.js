@@ -38,6 +38,12 @@ async function init() {
         if (librarySection) librarySection.classList.add('expanded');
     }
 
+    // Restore Shuffle State
+    isShuffle = localStorage.getItem('isShuffle') === 'true';
+    if (isShuffle) {
+        btnShuffle.classList.add('active');
+    }
+
     await fetchLibrary();
     await fetchComments();
     setupEventListeners();
@@ -48,6 +54,8 @@ async function init() {
         const track = library.find(t => t.id === lastPlayedId);
         if (track) {
             // Load but don't play
+            // FIX: Initialize queue so nextTrack works
+            queue = library;
             currentTrackIndex = library.findIndex(t => t.id === lastPlayedId);
             _loadAndPlay(track, false); // Pass false to autoPlay
         }
@@ -326,6 +334,7 @@ function setupEventListeners() {
 
     btnShuffle.addEventListener('click', () => {
         isShuffle = !isShuffle;
+        localStorage.setItem('isShuffle', isShuffle);
         if (isShuffle) {
             btnShuffle.classList.add('active');
         } else {
