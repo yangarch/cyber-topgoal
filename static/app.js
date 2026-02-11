@@ -152,6 +152,8 @@ function updateActiveTrackUI(trackId) {
         li.classList.remove('active');
         if (li.dataset.id === trackId) {
             li.classList.add('active');
+            // Auto-scroll to active track
+            li.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
     });
 }
