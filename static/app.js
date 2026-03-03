@@ -200,6 +200,9 @@ function _loadAndPlay(track, autoPlay = true) {
                 { src: `${API_BASE}/cover/${track.id}`, sizes: '512x512', type: 'image/png' }
             ]
         });
+
+        navigator.mediaSession.setActionHandler('previoustrack', prevTrack);
+        navigator.mediaSession.setActionHandler('nexttrack', nextTrack);
     }
 
     // Increment Play Count only if playing
