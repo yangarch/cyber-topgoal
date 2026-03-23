@@ -203,6 +203,14 @@ function _loadAndPlay(track, autoPlay = true) {
 
         navigator.mediaSession.setActionHandler('previoustrack', prevTrack);
         navigator.mediaSession.setActionHandler('nexttrack', nextTrack);
+        navigator.mediaSession.setActionHandler('play', () => {
+            audioPlayer.play();
+            updatePlayButton(true);
+        });
+        navigator.mediaSession.setActionHandler('pause', () => {
+            audioPlayer.pause();
+            updatePlayButton(false);
+        });
     }
 
     // Increment Play Count only if playing
