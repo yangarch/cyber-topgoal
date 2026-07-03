@@ -123,16 +123,40 @@ function renderLibrary(filterText = '') {
         const trackContent = document.createElement('div');
         trackContent.className = 'track-content';
         trackContent.style.flex = '1';
-        trackContent.innerHTML = `
-            <div class="track-info">
-                <span class="track-title">${track.title}</span>
-                <span class="track-artist">${track.artist}</span>
-            </div>
-            <div class="track-stats" style="font-size: 0.8rem; color: #888;">
-                <span title="Plays">▶️ ${track.play_count || 0}</span>
-                <span title="Finishes" style="margin-left: 8px;">✅ ${track.finish_count || 0}</span>
-            </div>
-        `;
+
+        // Build with textContent to prevent XSS (title/artist come from ID3 tags / filenames)
+        const trackInfo = document.createElement('div');
+        trackInfo.className = 'track-info';
+
+        const titleEl = document.createElement('span');
+        titleEl.className = 'track-title';
+        titleEl.textContent = track.title;
+
+        const artistEl = document.createElement('span');
+        artistEl.className = 'track-artist';
+        artistEl.textContent = track.artist;
+
+        trackInfo.appendChild(titleEl);
+        trackInfo.appendChild(artistEl);
+
+        const trackStats = document.createElement('div');
+        trackStats.className = 'track-stats';
+        trackStats.style.cssText = 'font-size: 0.8rem; color: #888;';
+
+        const playSpan = document.createElement('span');
+        playSpan.title = 'Plays';
+        playSpan.textContent = `▶️ ${Number(track.play_count) || 0}`;
+
+        const finishSpan = document.createElement('span');
+        finishSpan.title = 'Finishes';
+        finishSpan.style.marginLeft = '8px';
+        finishSpan.textContent = `✅ ${Number(track.finish_count) || 0}`;
+
+        trackStats.appendChild(playSpan);
+        trackStats.appendChild(finishSpan);
+
+        trackContent.appendChild(trackInfo);
+        trackContent.appendChild(trackStats);
 
         li.appendChild(checkbox);
         li.appendChild(trackContent);
@@ -305,13 +329,26 @@ function renderComments(comments) {
     comments.forEach(c => {
         const div = document.createElement('div');
         div.className = 'comment-item';
-        div.innerHTML = `
-            <div class="comment-header">
-                <strong>${c.nickname}</strong>
-                <span>${new Date(c.created_at).toLocaleString()}</span>
-            </div>
-            <div class="comment-content">${c.content}</div>
-        `;
+
+        // Build with textContent to prevent XSS (nickname/content are user input)
+        const header = document.createElement('div');
+        header.className = 'comment-header';
+
+        const name = document.createElement('strong');
+        name.textContent = c.nickname;
+
+        const time = document.createElement('span');
+        time.textContent = new Date(c.created_at).toLocaleString();
+
+        header.appendChild(name);
+        header.appendChild(time);
+
+        const content = document.createElement('div');
+        content.className = 'comment-content';
+        content.textContent = c.content;
+
+        div.appendChild(header);
+        div.appendChild(content);
         commentListEl.appendChild(div);
     });
 }
