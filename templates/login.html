@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cyber TopGoal</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32x32.png">
+    <link rel="shortcut icon" href="/static/favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
+    <style>
+        body {
+            align-items: center;
+            justify-content: center;
+        }
+
+        .login-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2.5rem 2rem;
+            width: 90%;
+            max-width: 340px;
+            text-align: center;
+        }
+
+        .login-card h1 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--accent-color);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin: 0 0 0.4rem;
+        }
+
+        .login-card p {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            margin: 0 0 1.6rem;
+        }
+
+        .login-card input[type="password"] {
+            width: 100%;
+            padding: 0.7rem 0.9rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: #121212;
+            color: var(--text-primary);
+            font-size: 1rem;
+            margin-bottom: 0.9rem;
+        }
+
+        .login-card input[type="password"]:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+
+        .login-card button {
+            width: 100%;
+            padding: 0.7rem;
+            border: none;
+            border-radius: 8px;
+            background: var(--accent-color);
+            color: #000;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .login-card button:hover {
+            background: var(--accent-hover);
+        }
+
+        .login-error {
+            color: #ff5c5c;
+            font-size: 0.85rem;
+            margin-bottom: 0.9rem;
+            min-height: 1.1rem;
+        }
+    </style>
+</head>
+
+<body>
+    <form class="login-card" method="post" action="/login">
+        <h1>Cyber TopGoal</h1>
+        <p>친구들만의 공간이에요 🎧<br>비밀번호를 입력해 주세요.</p>
+        {% if error %}
+        <div class="login-error">비밀번호가 올바르지 않아요.</div>
+        {% endif %}
+        <input type="password" name="password" placeholder="Password" autofocus autocomplete="current-password">
+        <button type="submit">입장하기</button>
+    </form>
+</body>
+
+</html>

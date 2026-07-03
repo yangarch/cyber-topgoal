@@ -1,7 +1,7 @@
 import os
 import mimetypes
-from fastapi import FastAPI, Request, Header, HTTPException, Depends
-from fastapi.responses import StreamingResponse, FileResponse, HTMLResponse
+from fastapi import FastAPI, Request, Header, HTTPException, Depends, Form
+from fastapi.responses import StreamingResponse, FileResponse, HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
@@ -11,6 +11,7 @@ from typing import Optional
 from .scanner import MusicScanner
 from .database import init_db, create_comment, get_comments, increment_play_count, increment_finish_count, get_all_track_stats
 from .models import Track, PublicTrack, Comment, CommentCreate
+from . import auth
 
 MUSIC_DIR = os.environ.get("MUSIC_DIR", "/music")
 scanner = MusicScanner(MUSIC_DIR)
@@ -37,6 +38,64 @@ app.add_middleware(
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
+
+# 인증 없이 접근 가능한 경로 (로그인 화면, 정적 리소스, 헬스체크 등)
+PUBLIC_PATHS = ("/login", "/logout", "/static", "/health", "/favicon.ico")
+
+
+@app.middleware("http")
+async def auth_middleware(request: Request, call_next):
+    # ACCESS_PASSWORD 가 설정돼 있을 때만 인증을 적용한다.
+    if not auth.AUTH_ENABLED:
+        return await call_next(request)
+
+    path = request.url.path
+    if path in PUBLIC_PATHS or path.startswith("/static"):
+        return await call_next(request)
+
+    if auth.verify_token(request.cookies.get(auth.COOKIE_NAME)):
+        return await call_next(request)
+
+    # 인증되지 않은 요청: API/스트리밍은 401, 페이지 요청은 로그인으로 리다이렉트
+    if path.startswith("/api"):
+        return JSONResponse({"detail": "Unauthorized"}, status_code=401)
+    return RedirectResponse(url="/login")
+
+
+@app.get("/login", response_class=HTMLResponse)
+async def login_page(request: Request):
+    return templates.TemplateResponse(request=request, name="login.html", context={"error": False})
+
+
+@app.post("/login")
+async def login_submit(request: Request, password: str = Form("")):
+    if auth.check_password(password):
+        response = RedirectResponse(url="/", status_code=303)
+        response.set_cookie(
+            key=auth.COOKIE_NAME,
+            value=auth.make_token(),
+            max_age=auth.COOKIE_MAX_AGE,
+            httponly=True,
+            samesite="lax",
+            secure=auth.COOKIE_SECURE,
+        )
+        return response
+    return templates.TemplateResponse(
+        request=request, name="login.html", context={"error": True}, status_code=401
+    )
+
+
+@app.get("/logout")
+async def logout():
+    response = RedirectResponse(url="/login", status_code=303)
+    response.delete_cookie(auth.COOKIE_NAME)
+    return response
+
+
+@app.get("/health")
+async def health():
+    return {"status": "ok"}
+
 
 @app.get("/", response_class=HTMLResponse)
 async def read_root(request: Request):

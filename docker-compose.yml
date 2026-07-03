@@ -11,4 +11,8 @@ services:
     environment:
       - MUSIC_DIR=/music
       - DATA_DIR=/data
+      # 접근 보호: .env 파일에서 값을 읽어온다 (아래 값이 비어 있으면 인증 비활성화)
+      - ACCESS_PASSWORD=${ACCESS_PASSWORD:-}
+      - SECRET_KEY=${SECRET_KEY:-}
+      - COOKIE_SECURE=${COOKIE_SECURE:-false}
     restart: unless-stopped
