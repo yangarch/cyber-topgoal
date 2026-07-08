@@ -208,6 +208,7 @@ async def get_cover(file_id: str):
          if os.path.exists(img_path):
              return FileResponse(img_path, headers=cache_headers)
 
-    # 3) Default cover
-    return FileResponse("static/default.jpeg", headers=cache_headers)
+    # 3) Default cover — redirect to a single shared URL so the browser
+    # fetches/caches it once instead of once per cover-less track.
+    return RedirectResponse(url="/static/default.jpeg")
 
