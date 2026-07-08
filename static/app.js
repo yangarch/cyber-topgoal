@@ -68,6 +68,13 @@ async function fetchLibrary() {
         const res = await fetch(`${API_BASE}/library`);
         library = await res.json();
 
+        // Sort by artist, then album, then title (case-insensitive)
+        library.sort((a, b) =>
+            (a.artist || '').localeCompare(b.artist || '', undefined, { sensitivity: 'base' }) ||
+            (a.album || '').localeCompare(b.album || '', undefined, { sensitivity: 'base' }) ||
+            (a.title || '').localeCompare(b.title || '', undefined, { sensitivity: 'base' })
+        );
+
         if (searchInput) {
             renderLibrary(searchInput.value);
         } else {
@@ -427,6 +434,17 @@ function setupEventListeners() {
             fetch(`${API_BASE}/track/${track.id}/finish`, { method: 'POST' }).catch(console.error);
         }
         nextTrack();
+    });
+
+    // Spacebar toggles play/pause on desktop, unless typing in a field
+    document.addEventListener('keydown', (e) => {
+        if (e.code !== 'Space' && e.key !== ' ') return;
+        const el = document.activeElement;
+        const tag = el && el.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || (el && el.isContentEditable)) return;
+        if (!audioPlayer.src) return; // nothing loaded yet
+        e.preventDefault(); // stop page from scrolling
+        togglePlay();
     });
 
     commentForm.addEventListener('submit', postComment);
