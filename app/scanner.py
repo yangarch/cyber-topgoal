@@ -78,6 +78,30 @@ class MusicScanner:
             return ""
         return s.encode('utf-8', 'replace').decode('utf-8')
 
+    def _fix_mojibake(self, s: Optional[str]) -> Optional[str]:
+        """Repair Korean tags stored as CP949 but mis-decoded as latin-1.
+
+        e.g. '¸ß½ÃÄÚÇà' -> '멕시코행'. Conservative: only converts when the
+        latin-1 high bytes re-decode into actual Hangul, so legitimate Latin
+        titles (Café, Motörhead, ...) are left untouched.
+        """
+        if not s:
+            return s
+        # Already has Hangul/CJK -> nothing to repair.
+        if any('가' <= ch <= '힣' or '一' <= ch <= '鿿' for ch in s):
+            return s
+        # No latin-1 high bytes -> not this kind of corruption.
+        if not any('' <= ch <= 'ÿ' for ch in s):
+            return s
+        try:
+            repaired = s.encode('latin-1').decode('cp949')
+        except (UnicodeEncodeError, UnicodeDecodeError):
+            return s
+        # Accept only if the result actually contains Hangul.
+        if any('가' <= ch <= '힣' for ch in repaired):
+            return repaired
+        return s
+
     def _process_file(self, path: str):
         audio = File(path, easy=True)
         id3_tags = None
@@ -98,9 +122,9 @@ class MusicScanner:
         
         # Metadata extraction
         if audio:
-            title = audio.get('title', [None])[0]
-            artist = audio.get('artist', [None])[0]
-            album = audio.get('album', [None])[0]
+            title = self._fix_mojibake(audio.get('title', [None])[0])
+            artist = self._fix_mojibake(audio.get('artist', [None])[0])
+            album = self._fix_mojibake(audio.get('album', [None])[0])
             duration = audio.info.length if hasattr(audio, 'info') else 0.0
         
         # Fallbacks
