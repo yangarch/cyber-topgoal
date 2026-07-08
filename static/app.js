@@ -7,6 +7,7 @@ const trackListEl = document.getElementById('track-list');
 const audioPlayer = document.getElementById('audio-player');
 const npTitle = document.getElementById('np-title');
 const npArtist = document.getElementById('np-artist');
+const npCover = document.getElementById('np-cover');
 const btnPlay = document.getElementById('btn-play');
 const btnNext = document.getElementById('btn-next');
 const btnPrev = document.getElementById('btn-prev');
@@ -120,6 +121,13 @@ function renderLibrary(filterText = '') {
             localStorage.setItem('skippedTracks', JSON.stringify([...skippedTracks]));
         });
 
+        // Album cover thumbnail (falls back to placeholder server-side)
+        const thumb = document.createElement('img');
+        thumb.className = 'track-thumb';
+        thumb.loading = 'lazy';
+        thumb.alt = '';
+        thumb.src = `${API_BASE}/cover/${track.id}`;
+
         const trackContent = document.createElement('div');
         trackContent.className = 'track-content';
         trackContent.style.flex = '1';
@@ -159,6 +167,7 @@ function renderLibrary(filterText = '') {
         trackContent.appendChild(trackStats);
 
         li.appendChild(checkbox);
+        li.appendChild(thumb);
         li.appendChild(trackContent);
 
         li.addEventListener('click', (e) => {
@@ -213,6 +222,7 @@ function _loadAndPlay(track, autoPlay = true) {
 
     npTitle.textContent = track.title;
     npArtist.textContent = track.artist;
+    if (npCover) npCover.src = `${API_BASE}/cover/${track.id}`;
     updateActiveTrackUI(track.id);
 
     if ('mediaSession' in navigator) {
