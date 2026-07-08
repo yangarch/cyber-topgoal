@@ -101,8 +101,11 @@ main {
 }
 
 .track-thumb {
-    width: 44px;
-    height: 44px;
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    max-width: 40px;
+    max-height: 40px;
     border-radius: 4px;
     object-fit: cover;
     margin-right: 12px;
@@ -143,8 +146,11 @@ main {
 }
 
 .np-cover {
-    width: 56px;
-    height: 56px;
+    width: 52px;
+    height: 52px;
+    min-width: 52px;
+    max-width: 52px;
+    max-height: 52px;
     border-radius: 4px;
     object-fit: cover;
     flex-shrink: 0;
@@ -306,6 +312,24 @@ button.active {
         width: 24px;
         height: 24px;
         margin-right: 20px;
+    }
+
+    /* Keep covers small so they never break the row / player layout */
+    .track-thumb {
+        width: 36px;
+        height: 36px;
+        min-width: 36px;
+        max-width: 36px;
+        max-height: 36px;
+        margin-right: 12px;
+    }
+
+    .np-cover {
+        width: 44px;
+        height: 44px;
+        min-width: 44px;
+        max-width: 44px;
+        max-height: 44px;
     }
 
     /* Player Controls */
