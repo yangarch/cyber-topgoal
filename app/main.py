@@ -1,14 +1,14 @@
 import os
 import mimetypes
 from fastapi import FastAPI, Request, Header, HTTPException, Depends, Form
-from fastapi.responses import StreamingResponse, FileResponse, HTMLResponse, RedirectResponse, JSONResponse
+from fastapi.responses import StreamingResponse, FileResponse, HTMLResponse, RedirectResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from typing import Optional
 
-from .scanner import MusicScanner
+from .scanner import MusicScanner, extract_cover
 from .database import init_db, create_comment, get_comments, increment_play_count, increment_finish_count, get_all_track_stats
 from .models import Track, PublicTrack, Comment, CommentCreate
 from . import auth
@@ -192,18 +192,22 @@ async def get_cover(file_id: str):
     track = scanner.get_track(file_id)
     if not track:
         raise HTTPException(status_code=404, detail="Track not found")
-    
-    # Try to extract embedded art
-    # Simplified: For now, if scanner says has_cover, we try to find a file.
-    # A real robust implementation would extract ID3 APIC frames. 
-    # Here checking for folder images is easier for MVP.
-    
+
+    cache_headers = {"Cache-Control": "public, max-age=86400"}
+
+    # 1) Embedded album art (mp3 / m4a / flac / ogg)
+    cover = extract_cover(track.path)
+    if cover:
+        data, mime = cover
+        return Response(content=data, media_type=mime, headers=cache_headers)
+
+    # 2) Fallback: an image file sitting in the album folder
     folder_path = os.path.dirname(track.path)
     for img in ['cover.jpg', 'folder.jpg', 'cover.png', 'folder.png']:
          img_path = os.path.join(folder_path, img)
          if os.path.exists(img_path):
-             return FileResponse(img_path)
-    
-    # Placeholder
-    return FileResponse("static/placeholder.png")
+             return FileResponse(img_path, headers=cache_headers)
+
+    # 3) Placeholder
+    return FileResponse("static/placeholder.png", headers=cache_headers)
 

@@ -1,12 +1,55 @@
 import os
 import glob
+import base64
 from mutagen import File
 from mutagen.id3 import ID3
-from typing import Dict, Optional
+from mutagen.mp4 import MP4, MP4Cover
+from mutagen.flac import FLAC, Picture
+from typing import Dict, Optional, Tuple
 from .models import Track
 from .utils import generate_file_id
 
 MUSIC_EXTENSIONS = ['.mp3', '.wav', '.flac', '.m4a', '.ogg']
+
+
+def extract_cover(path: str) -> Optional[Tuple[bytes, str]]:
+    """Extract embedded album art from an audio file.
+
+    Returns (image_bytes, mime_type) or None if no embedded art exists.
+    Supports mp3 (APIC), m4a/mp4 (covr), flac (pictures), ogg (metadata_block_picture).
+    """
+    ext = os.path.splitext(path)[1].lower()
+    try:
+        if ext == '.mp3':
+            tags = ID3(path)
+            for key in tags.keys():
+                if key.startswith('APIC'):
+                    apic = tags[key]
+                    return apic.data, (apic.mime or 'image/jpeg')
+
+        elif ext in ('.m4a', '.mp4', '.aac'):
+            mp4 = MP4(path)
+            covers = mp4.tags.get('covr') if mp4.tags else None
+            if covers:
+                cover = covers[0]
+                mime = 'image/png' if cover.imageformat == MP4Cover.FORMAT_PNG else 'image/jpeg'
+                return bytes(cover), mime
+
+        elif ext == '.flac':
+            flac = FLAC(path)
+            if flac.pictures:
+                pic = flac.pictures[0]
+                return pic.data, (pic.mime or 'image/jpeg')
+
+        elif ext == '.ogg':
+            audio = File(path)
+            b64 = audio.get('metadata_block_picture') if audio else None
+            if b64:
+                pic = Picture(base64.b64decode(b64[0]))
+                return pic.data, (pic.mime or 'image/jpeg')
+    except Exception:
+        pass
+    return None
 
 class MusicScanner:
     def __init__(self, music_dir: str):
